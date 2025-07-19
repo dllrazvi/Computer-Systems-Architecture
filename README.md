@@ -1,4 +1,4 @@
-                                                   Computer Systems Architecture – My Assembly Journey
+                                       Computer Systems Architecture – My Assembly Journey
  This repo gathers all my assembly projects—labs, practice tasks, and exam solutions—for the Computer Systems Architecture course. I went well beyond requirements, tackling extra challenges to deepen my understanding.
 
 # What I did:
