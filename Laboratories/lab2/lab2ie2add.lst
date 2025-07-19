@@ -1,0 +1,28 @@
+     1                                  bits 32 ;assembling for the 32 bits architecture
+     2                                  global start
+     3                                  
+     4                                  ; we ask the assembler to give global visibility to the symbol called start 
+     5                                  ;(the start label will be the entry point in the program) 
+     6                                  extern exit ; we inform the assembler that the exit symbol is foreign; it exists even if we won't be defining it
+     7                                  import exit msvcrt.dll  ; we specify the external library that defines the symbol
+     8                                          ; msvcrt.dll contains exit, printf and all the other important C-runtime functions
+     9                                  import printf msvcrt.dll
+    10                                  ; our variables are declared here (the segment is called data) 6
+    11                                  segment data use32 class=data
+    12 00000000 01                          a db 1
+    13 00000001 02                          b db 2
+    14 00000002 03                          c db 3
+    15 00000003 04                          d db 4
+    16                                  ; the program code will be part of a segment called code
+    17                                  segment code use32 class=code
+    18                                  start:
+    19                                          ;(b+b)+(c-a)+d, a,b,c,d byte
+    20 00000000 8A15[01000000]          mov dl, byte [b];
+    21 00000006 00D2                    add dl,dl; ; dl=dl+dl=b+b 
+    22 00000008 8A1D[02000000]          mov bl, byte [c];
+    23 0000000E A0[00000000]            mov al, byte [a];
+    24 00000013 28C3                    sub bl, al; ; bl=bl-al=c-a
+    25 00000015 00D3                    add bl, dl; ; bl=bl+dl=(c-a)+2*b
+    26 00000017 A0[03000000]            mov al, byte [d];
+    27 0000001C 00D8                    add al, bl ; al=al+bl=(b+b)+(c-a)+d
+    28 0000001E FF15[00000000]          call [exit]

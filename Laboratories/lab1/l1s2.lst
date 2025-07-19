@@ -1,0 +1,20 @@
+     1                                  bits 32 ;assembling for the 32 bits architecture
+     2                                  global start
+     3                                  
+     4                                  ; we ask the assembler to give global visibility to the symbol called start 
+     5                                  ;(the start label will be the entry point in the program) 
+     6                                  extern exit ; we inform the assembler that the exit symbol is foreign; it exists even if we won't be defining it
+     7                                  import exit msvcrt.dll  ; we specify the external library that defines the symbol
+     8                                          ; msvcrt.dll contains exit, printf and all the other important C-runtime functions
+     9                                  import printf msvcrt.dll
+    10                                  ; our variables are declared here (the segment is called data) 6
+    11                                  segment data use32 class=data
+    12 00000000 6D75656920617363         mesaj db "muei asc"
+    13                                  ; the program code will be part of a segment called code
+    14                                  segment code use32 class=code
+    15                                  start:
+    16 00000000 66B80700                mov ax, 7h
+    17 00000004 68[00000000]            push mesaj
+    18                                  call [printf]
+    18          ******************       error: symbol `printf' undefined
+    19 00000009 FF15[00000000]          call [exit]

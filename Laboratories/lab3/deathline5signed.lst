@@ -1,0 +1,50 @@
+     1                                  bits 32 
+     2                                  global start
+     3                                  extern exit 
+     4                                  import exit msvcrt.dll
+     5                                  segment data use32 class=data
+     6 00000000 07                          a db 7
+     7 00000001 02000000                    b dd 2
+     8 00000005 03                          c db 3
+     9 00000006 01                          d db 1
+    10 00000007 0A00000000000000            x dq 10
+    11                                  segment code use32 class=code
+    12                                  start:
+    13                                              ;x-(a+b+c*d)/(9-a); 
+    14                                              ;a,c,d-byte; b-doubleword; x-qword
+    15 00000000 A0[05000000]                mov AL,[c] ;AL=c
+    16 00000005 F62D[06000000]              imul byte [d] ;AX=AL*d=c*d
+    17 0000000B 6689C3                      mov bx,ax
+    18 0000000E A0[00000000]                mov al, [a] ;al= byte a
+    19 00000013 6698                        cbw ; signed conversion from byte to word, ax=al=a
+    20 00000015 6611D8                      adc ax, bx ; ax=ax+bx=a+c*d ; add
+    21                                      ; we need to convert word ax to doubleword to add b-doubleword
+    22 00000018 6699                        cwd; ax=dx:ax
+    23 0000001A 668B0D[01000000]            mov cx, word [b]
+    24 00000021 668B15[03000000]            mov dx, word [b+2];cx:dx=b
+    25 00000028 6611C1                      adc cx,ax ;add
+    26 0000002B 6611DA                      adc dx,bx ; dx:cx=a+b+c*d,cx
+    27 0000002E 6652                        push dx
+    28 00000030 6651                        push cx
+    29 00000032 5A                          pop edx ;edx=dx:cx=a+b+c*d
+    30 00000033 89D0                        mov eax,edx ;eax=edx
+    31 00000035 99                          cdq; edx:eax=a+b+c*d
+    32 00000036 89C1                        mov ecx,eax 
+    33 00000038 89D3                        mov ebx,edx ; ecx:ebx=edx:eax
+    34 0000003A B009                        mov al,9
+    35 0000003C 1A05[00000000]              sbb al, byte [a];al=9-a sub
+    36 00000042 6698                        cbw; signed conversion from byte al to word ax
+    37 00000044 6699                        cwd ;ax=dx:ax conversion from word to doubleword
+    38 00000046 6652                        push dx
+    39 00000048 6650                        push ax
+    40 0000004A 58                          pop eax ;eax=dx:ax=9-a
+    41 0000004B 89DA                        mov edx,ebx ; edx=ebx=a+b+c*d
+    42 0000004D 89C3                        mov ebx, eax ; ebx=9-a
+    43 0000004F 89C8                        mov eax,ecx
+    44 00000051 F7FB                        idiv ebx ;eax=edx:eax/ebx, edx=edx:eax%ebx edx:eax=(a+b+c*d)/(9-a)
+    45 00000053 8B0D[07000000]              mov ecx, dword [x]
+    46 00000059 8B1D[0B000000]              mov ebx, dword [x+4] ;ecx:ebx=x
+    47 0000005F 19C1                        sbb ecx, eax
+    48 00000061 19D3                        sbb ebx, edx ;ebx:ecx=ebx:ecx-edx:eax=x-(a+b+c*d)/(9-a)
+    49 00000063 6A00                        push dword 0 
+    50 00000065 FF15[00000000]              call [exit]

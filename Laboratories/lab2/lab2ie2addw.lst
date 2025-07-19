@@ -1,0 +1,28 @@
+     1                                  bits 32 ;assembling for the 32 bits architecture
+     2                                  global start
+     3                                  
+     4                                  ; we ask the assembler to give global visibility to the symbol called start 
+     5                                  ;(the start label will be the entry point in the program) 
+     6                                  extern exit ; we inform the assembler that the exit symbol is foreign; it exists even if we won't be defining it
+     7                                  import exit msvcrt.dll  ; we specify the external library that defines the symbol
+     8                                          ; msvcrt.dll contains exit, printf and all the other important C-runtime functions
+     9                                  import printf msvcrt.dll
+    10                                  ; our variables are declared here (the segment is called data) 6
+    11                                  segment data use32 class=data
+    12 00000000 01                          a db 1
+    13 00000001 05                          b db 5
+    14 00000002 03                          c db 3
+    15 00000003 04                          d db 4
+    16                                  ; the program code will be part of a segment called code
+    17                                  segment code use32 class=code
+    18                                  start:
+    19                                          ;(c+b+a)-(d+d), a,b,c,d word
+    20 00000000 66A1[02000000]          mov ax, word [c];
+    21 00000006 668B15[01000000]        mov dx, word [b];
+    22 0000000D 668B1D[00000000]        mov bx, word [a];
+    23 00000014 6601D0                  add ax,dx;
+    24 00000017 6601D8                  add ax,bx;
+    25 0000001A 668B1D[03000000]        mov bx, word [d];
+    26 00000021 6601DB                  add bx, bx;
+    27 00000024 6629D8                  sub ax, bx;
+    28 00000027 FF15[00000000]          call [exit]
