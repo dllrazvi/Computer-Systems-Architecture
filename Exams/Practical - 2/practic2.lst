@@ -1,0 +1,97 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  ; declare external functions needed by our program
+     6                                  extern exit, fopen, fclose, fprintf, scanf
+     7                                  import exit msvcrt.dll
+     8                                  import fopen msvcrt.dll
+     9                                  import fclose msvcrt.dll
+    10                                  import fprintf msvcrt.dll
+    11                                  import scanf msvcrt.dll
+    12                                  
+    13                                  ; our data is declared here (the variables needed by our program)
+    14                                  segment data use32 class=data
+    15 00000000 6E756D657265332E74-         file_name db "numere3.txt", 0   ; filename to be created
+    15 00000009 787400             
+    16 0000000C 7700                        access_mode db "w", 0
+    17 0000000E 256400                      format_in db "%d", 0   ; Format pentru citirea numerelor
+    18 00000011 25642000                    format_out db "%d ", 0 ; Format pentru scrierea numerelor
+    19 00000015 00000000                    n dd 0                 ; Variabila pentru stocarea lui N
+    20 00000019 00000000                    num dd 0               ; Variabila pentru stocarea numerelor citite
+    21 0000001D FFFFFFFF                    file_descriptor dd -1  ; variable to hold the file descriptor
+    22 00000021 6400                        l dw 100d
+    23                                  
+    24                                  segment code use32 class=code
+    25                                      start:
+    26                                          ; Citire N
+    27 00000000 68[15000000]                    push dword n
+    28 00000005 68[0E000000]                    push dword format_in
+    29 0000000A FF15[00000000]                  call [scanf]
+    30 00000010 83C408                          add esp, 4*2
+    31                                  
+    32                                          ; Open the file
+    33 00000013 68[0C000000]                    push dword access_mode     
+    34 00000018 68[00000000]                    push dword file_name
+    35 0000001D FF15[00000000]                  call [fopen]
+    36 00000023 83C408                          add esp, 4*2
+    37 00000026 A3[1D000000]                    mov [file_descriptor], eax
+    38 0000002B 83F800                          cmp eax, 0
+    39 0000002E 0F8488000000                    je cleanup
+    40                                  
+    41                                      read_loop:
+    42                                          ; Read an integer
+    43 00000034 68[19000000]                    push dword num
+    44 00000039 68[0E000000]                    push dword format_in
+    45 0000003E FF15[00000000]                  call [scanf]
+    46 00000044 83C408                          add esp, 8
+    47                                  
+    48                                          ; Check for end of input (character '$')
+    49 00000047 A1[19000000]                    mov eax, [num]
+    50 0000004C 83F824                          cmp eax, 36 ; ASCII code for '$'
+    51 0000004F 745C                            je close_file
+    52                                  
+    53                                          ; Check if the number is odd and tens digit is N
+    54 00000051 A1[19000000]                    mov eax, [num]
+    55 00000056 85C0                            test eax, eax
+    56 00000058 7819                            js negative_number
+    57 0000005A 89C3                            mov ebx, eax
+    58 0000005C C1EB04                          shr ebx, 4    ; Shift right by 4 bits to get the tens digit
+    59 0000005F 83E30F                          and ebx, 0xF  ; Isolate the tens digit
+    60 00000062 3B1D[15000000]                  cmp ebx, [n]
+    61 00000068 75CA                            jne read_loop
+    62 0000006A A901000000                      test eax, 1   ; Check if the number is odd
+    63 0000006F 74C3                            jz read_loop
+    64                                  
+    65                                          ; Write the number to the file
+    66 00000071 EB1E                            jmp write_number
+    67                                  
+    68                                      negative_number:
+    69 00000073 F7D8                            neg eax        ; Make the number positive to check the tens digit
+    70 00000075 89C3                            mov ebx, eax
+    71 00000077 C1EB04                          shr ebx, 4
+    72 0000007A 83E30F                          and ebx, 0xF
+    73 0000007D 3B1D[15000000]                  cmp ebx, [n]
+    74 00000083 75AF                            jne read_loop
+    75 00000085 A1[19000000]                    mov eax, [num]
+    76 0000008A A901000000                      test eax, 1   ; Check if the original number is odd
+    77 0000008F 74A3                            jz read_loop
+    78                                  
+    79                                      write_number:
+    80 00000091 FF35[19000000]                  push dword [num]
+    81 00000097 68[11000000]                    push dword format_out
+    82 0000009C FF35[1D000000]                  push dword [file_descriptor]
+    83 000000A2 FF15[00000000]                  call [fprintf]
+    84 000000A8 83C40C                          add esp, 12
+    85 000000AB EB87                            jmp read_loop
+    86                                  
+    87                                      close_file:
+    88                                          ; Close the file
+    89 000000AD FF35[1D000000]                  push dword [file_descriptor]
+    90 000000B3 FF15[00000000]                  call [fclose]
+    91 000000B9 83C404                          add esp, 4
+    92                                  
+    93                                      cleanup:
+    94                                          ; Exit program
+    95 000000BC 6A00                            push dword 0
+    96 000000BE FF15[00000000]                  call [exit]

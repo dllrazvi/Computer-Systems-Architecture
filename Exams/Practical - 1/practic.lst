@@ -1,0 +1,112 @@
+     1                                  ; The program will use:
+     2                                  ; - the function fopen() to open/create the file
+     3                                  ; - the function fclose() to close the created file.
+     4                                  
+     5                                  bits 32
+     6                                  
+     7                                  global start
+     8                                  
+     9                                  ; declare external functions needed by our program
+    10                                  extern exit, fopen, fclose, fprintf,scanf
+    11                                  import exit msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  import fclose msvcrt.dll
+    14                                  import fprintf msvcrt.dll
+    15                                  import scanf msvcrt.dll  
+    16                                  
+    17                                  ; our data is declared here (the variables needed by our program)
+    18                                  segment data use32 class=data
+    19 00000000 6E756D657265322E74-         file_name db "numere2.txt", 0   ; filename to be created
+    19 00000009 787400             
+    20 0000000C 7700                        access_mode db "w", 0
+    21 0000000E 256400                      format_in db "%d", 0   ; Format pentru citirea numerelor
+    22 00000011 25642000                    format_out db "%d ", 0 ; Format pentru scrierea numerelor
+    23 00000015 00000000                    n dd 0                 ; Variabila pentru stocarea lui N
+    24 00000019 00000000                    num dd 0               ; Variabila pentru stocarea numerelor citite
+    25 0000001D FFFFFFFF                    file_descriptor dd -1       ; variable to hold the file descriptor
+    26 00000021 6400                        l dw 100d
+    27                                  
+    28                                  ; our code starts here
+    29                                  segment code use32 class=code
+    30                                      start:
+    31                                          ;Să se scrie un program în limbaj de asamblare care:
+    32                                  
+    33                                          ;citește de la tastatură un număr natural N (0 < N < 7);
+    34                                          ;citește de la tastatură numere întregi până se introduce caracterul '$';
+    35                                          ;creează un fișier text cu numele "numere2.txt";
+    36                                          ;scrie în fișierul creat doar numerele întregi IMPARE și care au cifra zecilor egală cu N.
+    37                                              ;Exemplu:
+    38                                  
+    39                                              ;Dacă se citește de la tastatură:
+    40                                  
+    41                                              ; N = 3
+    42                                  
+    43                                              ; Numere: 32 -231 343 4 5678 6 -37 878 38 939 $
+    44                                  
+    45                                              ;fișierul "numere2.txt" va conține:
+    46                                  
+    47                                              ; -231 -37 939
+    48                                          
+    49                                          ; call fopen() to create the file
+    50                                          ; fopen() will return a file descriptor in the EAX or 0 in case of error
+    51                                          ; eax = fopen(file_name, access_mode)
+    52                                          ; Citire N
+    53 00000000 68[15000000]                    push dword n
+    54 00000005 68[0E000000]                    push dword format_in
+    55 0000000A FF15[00000000]                  call [scanf]
+    56 00000010 83C408                          add esp, 4*2
+    57 00000013 68[0C000000]                    push dword access_mode     
+    58 00000018 68[00000000]                    push dword file_name
+    59 0000001D FF15[00000000]                  call [fopen]
+    60 00000023 83C408                          add esp, 4*2                ; clean-up the stack
+    61                                  
+    62 00000026 A3[1D000000]                    mov [file_descriptor], eax  ; store the file descriptor returned by fopen
+    63 0000002B 83F800                          cmp eax,0
+    64 0000002E 746C                            je close_file
+    65                                          ; Start reading numbers and writing to the file
+    66                                      read_loop:
+    67                                          ; Read an integer
+    68 00000030 68[19000000]                    push dword num
+    69 00000035 68[0E000000]                    push dword format_in
+    70 0000003A FF15[00000000]                  call [scanf]
+    71 00000040 83C408                          add esp, 8
+    72                                  
+    73                                          ; Check for end of input (character '$')
+    74 00000043 A1[19000000]                    mov eax, [num]
+    75 00000048 83F824                          cmp eax, 36 ; ASCII code for '$'
+    76 0000004B 744F                            je close_file
+    77 0000004D A1[19000000]                    mov eax, [num]
+    78 00000052 99                              cdq                          ; Sign-extend EAX into EDX
+    79 00000053 BB[21000000]                    mov ebx, l
+    80 00000058 F7FB                            idiv ebx
+    81 0000005A 3B15[15000000]                  cmp edx, [n]                ; Compare tens digit with N
+    82 00000060 75CE                            jne read_loop
+    83                                     
+    84                                      negative_number:
+    85 00000062 F7D8                            neg eax        ; Make the number positive to check the tens digit
+    86 00000064 89C3                            mov ebx, eax
+    87 00000066 C1EB04                          shr ebx, 4
+    88 00000069 83E30F                          and ebx, 0xF
+    89 0000006C 3B1D[15000000]                  cmp ebx, [n]
+    90 00000072 75BC                            jne read_loop
+    91 00000074 A1[19000000]                    mov eax, [num]
+    92 00000079 A901000000                      test eax, 1   ; Check if the original number is odd
+    93 0000007E 74B0                            jz read_loop
+    94                                  
+    95                                      write_number:
+    96 00000080 FF35[19000000]                  push dword [num]
+    97 00000086 68[11000000]                    push dword format_out
+    98 0000008B FF35[1D000000]                  push dword [file_descriptor]
+    99 00000091 FF15[00000000]                  call [fprintf]
+   100 00000097 83C40C                          add esp, 12
+   101 0000009A EB94                            jmp read_loop
+   102                                      
+   103                                      close_file:
+   104 0000009C FF35[1D000000]              push dword [file_descriptor]
+   105 000000A2 FF15[00000000]              call [fclose]
+   106 000000A8 83C404                      add esp, 4
+   107                                  
+   108                                      ; Cleanup and exit
+   109                                      cleanup:
+   110 000000AB 6A00                        push dword 0
+   111 000000AD FF15[00000000]              call [exit]
