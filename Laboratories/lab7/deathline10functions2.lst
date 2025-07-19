@@ -1,0 +1,57 @@
+     1                                  ; The code below will print message ”n=”, then will read from keyboard the value of perameter n.
+     2                                  bits 32
+     3                                  global start        
+     4                                  ; declare extern functions used by the programme
+     5                                  extern exit, printf, scanf ; add printf and scanf as extern functions            
+     6                                  import exit msvcrt.dll    
+     7                                  import printf msvcrt.dll    ; tell the assembler that function printf is found in msvcrt.dll library
+     8                                  import scanf msvcrt.dll  
+     9                                  segment data use32 class=data
+    10 00000000 00000000                    a dd  0
+    11 00000004 00000000                    b dd 0
+    12 00000008 00000000                    result dd 0
+    13 0000000C 456E74657220613A20-         message  db "Enter a: ", 0
+    13 00000015 00                 
+    14 00000016 456E74657220623A20-         message1  db "Enter b: ", 0
+    14 0000001F 00                 
+    15 00000020 256400                      format  db "%d", 0
+    16 00000023 526573756C743A2025-         result_msg db "Result: %d", 0
+    16 0000002C 6400               
+    17                                  
+    18                                  segment code use32 class=code
+    19                                      start:
+    20                                          ; Read a
+    21 00000000 68[0C000000]                    push dword message
+    22 00000005 FF15[00000000]                  call [printf]
+    23 0000000B 83C404                          add esp, 4
+    24 0000000E 68[00000000]                    push dword a
+    25 00000013 68[20000000]                    push dword format
+    26 00000018 FF15[00000000]                  call [scanf]
+    27 0000001E 83C408                          add esp, 8
+    28                                  
+    29                                          ; Read b
+    30 00000021 68[16000000]                    push dword message1
+    31 00000026 FF15[00000000]                  call [printf]
+    32 0000002C 83C404                          add esp, 4
+    33 0000002F 68[04000000]                    push dword b
+    34 00000034 68[20000000]                    push dword format
+    35 00000039 FF15[00000000]                  call [scanf]
+    36 0000003F 83C408                          add esp, 8
+    37                                  
+    38                                          ; Calculate (a+b)*(a-b)
+    39 00000042 A1[00000000]                    mov eax, [a]
+    40 00000047 0305[04000000]                  add eax, [b]
+    41 0000004D 89C3                            mov ebx, eax
+    42 0000004F A1[00000000]                    mov eax, [a]
+    43 00000054 2B05[04000000]                  sub eax, [b]
+    44 0000005A F7EB                            imul ebx
+    45 0000005C A3[08000000]                    mov [result], eax
+    46                                  
+    47                                          ; Print result
+    48 00000061 50                              push eax
+    49 00000062 68[23000000]                    push dword result_msg
+    50 00000067 FF15[00000000]                  call [printf]
+    51 0000006D 83C408                          add esp, 8
+    52                                  
+    53 00000070 6A00                            push dword 0
+    54 00000072 FF15[00000000]                  call [exit]

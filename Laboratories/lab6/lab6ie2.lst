@@ -1,0 +1,38 @@
+     1                                  bits 32 
+     2                                  global start
+     3                                  extern exit 
+     4                                  ;extern exit,printf
+     5                                  import exit msvcrt.dll
+     6                                  ;import printf msvcrt.dll
+     7                                  segment data use32 class=data
+     8 00000000 07563412153C2B1A12-         s DD 12345607h, 1A2B3C15h, 13A33412h
+     8 00000009 34A313             
+     9                                      l equ ($-s)/4 ; the length of the initial string
+    10 0000000C 00<rept>                    d times l db 0 ;length of d1 and d2 are length(s)
+    11 0000000F 07                          sapte db 7
+    12                                  segment code use32 class=code
+    13                                  start:
+    14                                      ;Given an array S of doublewords, build the array of bytes D formed from lower bytes of lower words, bytes multiple of 7.
+    15                                      ;we have a doubleword with 4 bytes,
+    16 00000000 B903000000                  mov ecx,l ;we move the length in ecx to have a loop with l iterations
+    17 00000005 BF00000000                  mov edi,0
+    18 0000000A BE[00000000]                mov esi,s
+    19 0000000F BB00000000                  mov ebx, 0
+    20 00000014 BF[0C000000]                mov edi,d
+    21 00000019 FC                          cld
+    22                                      repeta:
+    23 0000001A AC                             lodsb ;The byte from the address <DS:ESI> is loaded in AL
+    24                                          ;If DF=0 then inc(ESI), else dec(ESI)
+    25 0000001B 88C3                           mov bl,al ;make a copy of the byte in bl
+    26 0000001D B800000000                     mov eax,0
+    27 00000022 88D8                           mov al,bl
+    28 00000024 F635[0F000000]                 div byte [sapte] ; al/7, ah reminder
+    29 0000002A 80FC00                         cmp ah,0 ; see if al is div by 7
+    30 0000002D 7503                           jne do_not_add  ;jump short if not equal
+    31 0000002F 88D8                           mov al,bl
+    32 00000031 AA                             stosb ;Store al into the double word from the address <ES:EDI>
+    33                                         do_not_add:
+    34                                         
+    35 00000032 E2E6                        loop repeta   
+    36 00000034 6A00                        push dword 0 
+    37 00000036 FF15[00000000]              call [exit]

@@ -1,0 +1,55 @@
+     1                                  ; The code below will print message ”n=”, then will read from keyboard the value of perameter n.
+     2                                  bits 32
+     3                                  global start        
+     4                                  ; declare extern functions used by the programme
+     5                                  extern exit, printf, scanf ; add printf and scanf as extern functions            
+     6                                  import exit msvcrt.dll    
+     7                                  import printf msvcrt.dll    ; tell the assembler that function printf is found in msvcrt.dll library
+     8                                  import scanf msvcrt.dll     ; similar for scanf
+     9                                  segment data use32 class=data
+    10 00000000 00000000                	a dd  0       ; in this variable we'll store the value read from the keyboard
+    11 00000004 00000000                    b dd 0
+    12 00000008 00000000                    result dd 0
+    13                                      ; char strings are of type byte
+    14 0000000C 613D00                  	message  db "a=", 0  ; char strings for C functions must terminate with 0(value, not char)
+    15 0000000F 623D00                      message1  db "b=", 0  ; char strings for C functions must terminate with 0(value, not char)
+    16 00000012 256400                  	format  db "%d", 0  ; %d <=> a decimal number (base 10)
+    17 00000015 613D256400                  message2 db "a=%d",0 
+    18                                  segment code use32 class=code
+    19                                      start:
+    20                                      ;Read two numbers a and b (base 10) from the keyboard and calculate: (a+b)*(a-b). 
+    21                                      ;The result of multiplication will be stored in a variable called "result" (defined in the data segment).
+    22                                  
+    23                                      ; will call printf(message) => will print "a="
+    24                                      ; place parameters on stack
+    25                                      
+    26 00000000 68[0C000000]                push dword message ; we push the message "a=" on the stack
+    27 00000005 FF15[00000000]              call [printf] ; we print the message on the console
+    28 0000000B 83C604                      add esi, 4*1 ;we free the stack ;4 = size of dword; 1 = number of parameters
+    29                                      ; will call scanf(format, a) => will read a number in variable a
+    30                                      ; place parameters on stack from right to left
+    31 0000000E 68[00000000]                push dword a 
+    32 00000013 68[12000000]                push dword format ; we push a on stack to store the input value in it
+    33 00000018 FF15[00000000]              call [scanf] ;call the input function
+    34 0000001E 83C608                      add esi, 4*2 ; free the stack; 4= size of dword; 2= number of parameters
+    35                                      ; analog for b
+    36 00000021 68[0F000000]                push dword message1
+    37 00000026 FF15[00000000]              call [printf]
+    38 0000002C 83C604                      add esi,4*1
+    39 0000002F 68[04000000]                push dword b
+    40 00000034 68[12000000]                push dword format
+    41 00000039 FF15[00000000]              call [scanf]
+    42 0000003F 83C608                      add esi,4*2
+    43 00000042 A1[00000000]                mov eax,dword [a]
+    44 00000047 0305[04000000]              add eax, dword [b]
+    45 0000004D 89C3                        mov ebx,eax
+    46 0000004F A1[00000000]                mov eax, dword [a]
+    47 00000054 2B05[04000000]              sub eax, dword [b]
+    48 0000005A F7E3                        mul ebx
+    49 0000005C 50                          push eax
+    50 0000005D 68[15000000]                push dword message2
+    51 00000062 FF15[00000000]              call [printf] 
+    52 00000068 83C608                      add esi,4*2
+    53 0000006B 6A00                        push dword 0      ; place on stack parameter for exit
+    54 0000006D FF15[00000000]              call [exit]       ; call exit to terminate the program
+    55                                      
